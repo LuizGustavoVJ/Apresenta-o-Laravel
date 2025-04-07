@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers\Auth;
 
-use App\Http\Controllers\Controller;
 use App\Models\User;
-use Illuminate\Foundation\Auth\RegistersUsers;
+use App\Services\UploadService;
+use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Foundation\Auth\RegistersUsers;
 
 class RegisterController extends Controller
 {
@@ -30,14 +33,17 @@ class RegisterController extends Controller
      */
     protected $redirectTo = '/home';
 
+    protected $uploadService;
+
     /**
      * Create a new controller instance.
      *
      * @return void
      */
-    public function __construct()
+    public function __construct(UploadService $uploadService)
     {
         $this->middleware('guest');
+        $this->uploadService = $uploadService;
     }
 
     /**
@@ -52,6 +58,7 @@ class RegisterController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'imagem' => ['required', 'image', 'mimes:jpeg,png,jpg,gif,bmp', 'max:5120'], // 5MB
         ]);
     }
 
@@ -63,10 +70,36 @@ class RegisterController extends Controller
      */
     protected function create(array $data)
     {
-        return User::create([
+        Log::info('Iniciando criação de usuário', ['data' => $data]);
+
+        $upload = null;
+
+        if (request()->hasFile('imagem')) {
+            Log::info('Arquivo de imagem recebido', [
+                'mime_type' => request()->file('imagem')->getMimeType(),
+                'size' => request()->file('imagem')->getSize(),
+                'original_name' => request()->file('imagem')->getClientOriginalName(),
+            ]);
+
+            try {
+                $upload = $this->uploadService->uploadArquivo(request()->file('imagem'));
+                Log::info('Upload concluído com sucesso', ['upload' => $upload]);
+            } catch (\Exception $e) {
+                Log::error('Erro durante upload da imagem', ['erro' => $e->getMessage()]);
+            }
+        } else {
+            Log::warning('Nenhum arquivo de imagem enviado na requisição.');
+        }
+
+        $user = User::create([
             'name' => $data['name'],
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
+            'arquivo_id' => $upload['id'] ?? null,
         ]);
+
+        Log::info('Usuário criado com sucesso', ['user_id' => $user->id, 'arquivo_id' => $user->arquivo_id]);
+
+        return $user;
     }
 }

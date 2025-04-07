@@ -142,13 +142,15 @@
             @else
                 <div class="dropdown ms-3">
                     <a class="dropdown-toggle text-white" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <img class="user-avatar" src="https://via.placeholder.com/24" alt="avatar">
-                        {{ Auth::user()->name }}
+                        <img class="user-avatar rounded-circle"
+                            src="{{ Auth::user()->arquivo ? asset('storage/' . Auth::user()->arquivo->caminho) : 'https://via.placeholder.com/24' }}"
+                            alt="avatar"
+                            width="24" height="24">
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li>
                             <a class="dropdown-item" href="{{ route('logout') }}"
-                               onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                            onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                                 Logout
                             </a>
                             <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">

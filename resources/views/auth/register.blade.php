@@ -65,7 +65,7 @@
 <div class="register-container">
     <h2>Register</h2>
 
-    <form method="POST" action="{{ route('register') }}">
+    <form method="POST" action="{{ route('register') }}" enctype="multipart/form-data">
         @csrf
 
         <div class="form-group">
@@ -103,6 +103,15 @@
                    class="form-control"
                    name="password_confirmation"
                    placeholder="Confirm Password" required autocomplete="new-password">
+        </div>
+
+        <div class="form-group">
+            <input type="file"
+                   class="form-control @error('imagem') is-invalid @enderror"
+                   name="imagem" required>
+            @error('imagem')
+                <small class="text-danger">{{ $message }}</small>
+            @enderror
         </div>
 
         <button type="submit" class="btn btn-register">
